@@ -1,0 +1,2071 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小学语文课程脚本生成工具</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-light: #eef2ff;
+            --accent: #8b5cf6;
+            --accent-light: #f3e8ff;
+            --success: #10b981;
+            --success-light: #d1fae5;
+            --danger: #ef4444;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --shadow: 0 2px 8px rgba(99,102,241,0.08);
+            --shadow-md: 0 4px 16px rgba(99,102,241,0.12);
+            --shadow-lg: 0 8px 32px rgba(99,102,241,0.16);
+            --radius: 20px;
+            --radius-sm: 12px;
+        }
+
+        body {
+            font-family: "Microsoft YaHei", "Noto Sans SC", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh;
+            padding: 32px 20px;
+            color: var(--text);
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background:
+                radial-gradient(circle at 20% 30%, rgba(99,102,241,0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(139,92,246,0.15) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── 主容器 ── */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.5);
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
+            animation: slideUp 0.6s ease-out;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── Header ── */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 48px 40px 36px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -80px; right: -80px;
+            width: 240px; height: 240px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            animation: float 6s ease-in-out infinite;
+        }
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: -50px; left: -50px;
+            width: 180px; height: 180px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.08);
+            animation: float 8s ease-in-out infinite reverse;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-20px) scale(1.05); }
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            position: relative;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header-sub {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-top: 8px;
+            position: relative;
+            font-weight: 400;
+        }
+
+        /* ── 内容区 ── */
+        .main-content { padding: 36px 40px 12px; }
+
+        /* ── Section 卡片 ── */
+        .section {
+            margin-bottom: 24px;
+            padding: 28px;
+            background: linear-gradient(135deg, #ffffff 0%, #fafbff 100%);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+        .section::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: var(--radius-sm);
+            background: linear-gradient(135deg, rgba(99,102,241,0.03) 0%, rgba(139,92,246,0.03) 100%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        .section:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+            border-color: rgba(99,102,241,0.2);
+        }
+        .section:hover::before { opacity: 1; }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--primary-dark);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+        }
+        .section-icon {
+            width: 28px; height: 28px;
+            background: var(--primary-light);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        /* ── 表单 ── */
+        .form-group { margin-bottom: 20px; }
+        .form-group:last-child { margin-bottom: 0; }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            letter-spacing: 0.3px;
+            text-transform: none;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: inherit;
+            color: var(--text);
+            background: white;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .form-input:hover,
+        .form-select:hover,
+        .form-textarea:hover {
+            border-color: #c7d2fe;
+        }
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(99,102,241,0.1);
+            transform: translateY(-1px);
+        }
+        .form-textarea {
+            min-height: 110px;
+            resize: vertical;
+            line-height: 1.7;
+        }
+
+        /* ── 单选/复选 ── */
+        .radio-group, .checkbox-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .radio-item, .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border: 2px solid var(--border);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            background: white;
+            user-select: none;
+        }
+        .radio-item:hover, .checkbox-item:hover {
+            border-color: var(--primary);
+            color: var(--primary-dark);
+            background: var(--primary-light);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(99,102,241,0.15);
+        }
+        .radio-item input, .checkbox-item input { cursor: pointer; }
+
+        /* ── 模块选择 pill 样式 ── */
+        .module-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 4px;
+        }
+        .module-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 18px;
+            border: 2px solid var(--border);
+            border-radius: 24px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            background: white;
+            user-select: none;
+            font-weight: 500;
+        }
+        .module-pill:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99,102,241,0.2);
+        }
+        .module-pill input { cursor: pointer; }
+        .module-pill-all {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(99,102,241,0.3);
+        }
+        .module-pill-all:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 6px 20px rgba(99,102,241,0.4);
+        }
+
+        /* ── 模块板块 ── */
+        .module-blocks {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .module-block {
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: white;
+        }
+        .module-block:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 16px rgba(99,102,241,0.15);
+            transform: translateY(-2px);
+        }
+        .module-block-header {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            padding: 10px 14px;
+            border-bottom: 2px solid var(--border);
+        }
+        .module-block-check {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .module-block-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .module-block-items {
+            padding: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        /* ── 按钮 ── */
+        .btn-group { display: flex; gap: 12px; margin-top: 8px; }
+
+        .btn {
+            padding: 13px 32px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 0; height: 0;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        .btn:active::before {
+            width: 300px;
+            height: 300px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 6px 20px rgba(102,126,234,0.4);
+        }
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(102,126,234,0.5);
+        }
+        .btn-primary:active {
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background: white;
+            color: var(--text-muted);
+            border: 2px solid var(--border);
+        }
+        .btn-secondary:hover {
+            border-color: var(--primary);
+            color: var(--primary-dark);
+            background: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99,102,241,0.15);
+        }
+        .btn-sm {
+            padding: 8px 18px;
+            font-size: 13px;
+        }
+
+        /* ── 生成按钮区 ── */
+        .generate-bar {
+            background: linear-gradient(135deg, #faf5ff 0%, #eff6ff 100%);
+            border: 2px solid #e9d5ff;
+            border-radius: var(--radius-sm);
+            padding: 24px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 16px rgba(139,92,246,0.1);
+        }
+        .generate-bar-text {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+        .generate-bar-text strong {
+            color: var(--primary-dark);
+            font-weight: 600;
+        }
+
+        /* ── Loading ── */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .loading-spinner {
+            width: 56px; height: 56px;
+            border: 5px solid var(--primary-light);
+            border-top: 5px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 20px;
+        }
+        .loading p {
+            color: var(--text-muted);
+            font-size: 15px;
+            font-weight: 500;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── 结果区 ── */
+        .result-area {
+            display: none;
+            margin-bottom: 24px;
+        }
+        .result-card {
+            background: white;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+        }
+        .result-card-header {
+            padding: 14px 20px;
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .result-card-header .result-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .result-content {
+            padding: 24px;
+            white-space: pre-wrap;
+            font-family: "Microsoft YaHei", monospace;
+            font-size: 14px;
+            max-height: 600px;
+            overflow-y: auto;
+            line-height: 1.9;
+            color: var(--text);
+        }
+
+        /* ── 消息提示 ── */
+        .error-message {
+            background: #fef2f2;
+            color: #991b1b;
+            padding: 14px 18px;
+            border-radius: var(--radius-sm);
+            border: 1px solid #fecaca;
+            margin-top: 14px;
+            font-size: 13px;
+            display: none;
+            white-space: pre-wrap;
+        }
+        .success-message {
+            background: #f0fdf4;
+            color: #166534;
+            padding: 14px 18px;
+            border-radius: var(--radius-sm);
+            border: 1px solid #bbf7d0;
+            margin-top: 14px;
+            font-size: 13px;
+            display: none;
+        }
+
+        /* ── 文件上传 ── */
+        .file-upload {
+            border: 2px dashed var(--primary);
+            padding: 28px;
+            text-align: center;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: background 0.2s;
+            background: var(--primary-light);
+        }
+        .file-upload:hover { background: #d4d9fc; }
+        .file-upload input { display: none; }
+
+        /* ── 历史记录（底部） ── */
+        .history-section {
+            margin-top: 0;
+            border-radius: 0 0 var(--radius) var(--radius);
+            border: none;
+            border-top: 1.5px solid var(--border);
+            overflow: hidden;
+            background: white;
+        }
+        .history-section-header {
+            background: var(--bg);
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .history-section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .history-count {
+            background: var(--primary);
+            color: white;
+            font-size: 11px;
+            padding: 1px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        .history-clear-btn {
+            font-size: 12px;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px 10px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .history-clear-btn:hover { background: #fee2e2; color: var(--danger); }
+
+        .history-list-bottom {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 12px;
+            padding: 16px;
+        }
+        .history-empty {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 13px;
+            padding: 36px 20px;
+            grid-column: 1/-1;
+        }
+        .history-item {
+            padding: 14px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--bg);
+            transition: all 0.2s;
+        }
+        .history-item:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+        .history-item.active {
+            border-color: var(--primary);
+            background: #ede9fe;
+        }
+        .history-item-title {
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 3px;
+        }
+        .history-item-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+        .history-item-actions { display: flex; gap: 6px; }
+        .history-btn {
+            padding: 4px 12px;
+            font-size: 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .history-btn-view { background: var(--primary); color: white; }
+        .history-btn-view:hover { background: var(--primary-dark); }
+        .history-btn-delete { background: #f1f5f9; color: var(--text-muted); }
+        .history-btn-delete:hover { background: #fee2e2; color: var(--danger); }
+
+        /* ── API 配置小字提示 ── */
+        .api-hint {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        @media (max-width: 640px) {
+            .main-content { padding: 20px 16px 8px; }
+            .header { padding: 24px 20px 18px; }
+            .generate-bar { flex-direction: column; align-items: flex-start; }
+            .history-list-bottom { grid-template-columns: 1fr 1fr; }
+            .module-pills { gap: 6px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 小学语文课程脚本生成工具</h1>
+            <p class="header-sub">AI 驱动 · 一键生成逐字稿 · 专为 4–6 年级语文课程设计</p>
+        </div>
+
+        <div class="main-content">
+            <!-- 第一部分：基础信息 -->
+            <div class="section">
+                <div class="section-title"><span class="section-icon">📖</span>基础信息</div>
+
+                <div class="form-group">
+                    <label class="form-label">年级学段 *</label>
+                    <select class="form-select" id="grade">
+                        <option value="">请选择</option>
+                        <option value="四年级上册">四年级上册</option>
+                        <option value="四年级下册">四年级下册</option>
+                        <option value="五年级上册">五年级上册</option>
+                        <option value="五年级下册">五年级下册</option>
+                        <option value="六年级上册">六年级上册</option>
+                        <option value="六年级下册">六年级下册</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">课文名称 *</label>
+                    <input type="text" class="form-input" id="lessonName" placeholder="例如：走月亮">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">课文内容 *</label>
+                    <div class="radio-group" style="margin-bottom: 10px;">
+                        <label class="radio-item">
+                            <input type="radio" name="contentMode" value="manual" checked>
+                            <span>手动输入</span>
+                        </label>
+                        <label class="radio-item">
+                            <input type="radio" name="contentMode" value="library">
+                            <span>从教材库选择</span>
+                        </label>
+                    </div>
+                    <div id="libraryContent" style="display: none;">
+                        <select class="form-select" id="lessonSelect" onchange="loadLessonFromLibrary()">
+                            <option value="">请选择课文</option>
+                        </select>
+                    </div>
+                    <div id="manualContent">
+                        <textarea class="form-textarea" id="lessonContent" placeholder="请粘贴完整的课文内容..."></textarea>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">重难点提示（可选）</label>
+                    <input type="text" class="form-input" id="keyPoints" placeholder="例如：重点理解比喻修辞，体会母女情深">
+                </div>
+            </div>
+
+            <!-- 第二部分：参考模式 -->
+            <div class="section">
+                <div class="section-title"><span class="section-icon">📎</span>参考模式</div>
+
+                <div class="form-group">
+                    <label class="form-label">是否有参考资料？</label>
+                    <div class="radio-group">
+                        <label class="radio-item">
+                            <input type="radio" name="referenceMode" value="no" checked>
+                            <span>无参考（直接生成）</span>
+                        </label>
+                        <label class="radio-item">
+                            <input type="radio" name="referenceMode" value="yes">
+                            <span>有参考（课堂录音/视频/文字）</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="referenceContent" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">参考资料类型</label>
+                        <div class="radio-group">
+                            <label class="radio-item">
+                                <input type="radio" name="referenceType" value="text">
+                                <span>文字参考</span>
+                            </label>
+                            <label class="radio-item">
+                                <input type="radio" name="referenceType" value="video">
+                                <span>视频链接</span>
+                            </label>
+                            <label class="radio-item">
+                                <input type="radio" name="referenceType" value="file">
+                                <span>上传文件</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="textReference" style="display: none;">
+                        <textarea class="form-textarea" id="referenceText" placeholder="粘贴课堂实录文字或参考资料..."></textarea>
+                    </div>
+
+                    <div id="videoReference" style="display: none;">
+                        <input type="text" class="form-input" id="videoUrl" placeholder="输入视频链接（支持转写为文字）">
+                    </div>
+
+                    <div id="fileReference" style="display: none;">
+                        <div class="file-upload">
+                            <input type="file" id="fileUpload" accept=".txt,.doc,.docx,.pdf">
+                            <p>📁 点击上传文件或拖拽到此处</p>
+                            <p style="font-size: 12px; color: #999;">支持 TXT、DOC、DOCX、PDF 格式</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第三部分：生字选择 -->
+            <div class="section">
+                <div class="section-title"><span class="section-icon">✏️</span>生字词选择</div>
+
+                <div class="form-group">
+                    <label class="form-label">选择方式</label>
+                    <div class="radio-group">
+                        <label class="radio-item">
+                            <input type="radio" name="wordMode" value="auto" checked>
+                            <span>自动提取（从教材）</span>
+                        </label>
+                        <label class="radio-item">
+                            <input type="radio" name="wordMode" value="manual">
+                            <span>手动输入</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="manualWords" style="display: none;">
+                    <textarea class="form-textarea" id="wordsInput" placeholder="输入生字词，用逗号或空格分隔，例如：淘 牵 辨 俯"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">生字数量</label>
+                    <div class="radio-group">
+                        <label class="radio-item">
+                            <input type="radio" name="wordCount" value="all" checked>
+                            <span>全部生字</span>
+                        </label>
+                        <label class="radio-item">
+                            <input type="radio" name="wordCount" value="partial">
+                            <span>部分生字</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第四部分：模块选择 -->
+            <div class="section">
+                <div class="section-title"><span class="section-icon">🧩</span>生成模块</div>
+                <div class="form-group">
+                    <label class="form-label">选择要生成的内容</label>
+
+                    <!-- 完整脚本 -->
+                    <div class="module-pills" style="margin-bottom: 14px;">
+                        <label class="module-pill module-pill-all">
+                            <input type="checkbox" name="module" value="all" id="moduleAll">
+                            <span>⭐ 完整脚本</span>
+                        </label>
+                    </div>
+
+                    <!-- 四个板块 -->
+                    <div class="module-blocks">
+                        <!-- 板块1 -->
+                        <div class="module-block">
+                            <div class="module-block-header">
+                                <label class="module-block-check">
+                                    <input type="checkbox" class="block-check" data-block="1" onchange="toggleBlock(this)">
+                                    <span class="module-block-title">📝 字词学习</span>
+                                </label>
+                            </div>
+                            <div class="module-block-items">
+                                <label class="module-pill">
+                                    <input type="checkbox" name="module" value="word" class="module-item" data-block="1">
+                                    <span>字词学习</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- 板块2 -->
+                        <div class="module-block">
+                            <div class="module-block-header">
+                                <label class="module-block-check">
+                                    <input type="checkbox" class="block-check" data-block="2" onchange="toggleBlock(this)">
+                                    <span class="module-block-title">📖 课文理解</span>
+                                </label>
+                            </div>
+                            <div class="module-block-items">
+                                <label class="module-pill">
+                                    <input type="checkbox" name="module" value="intro" class="module-item" data-block="2">
+                                    <span>情景导入</span>
+                                </label>
+                                <label class="module-pill">
+                                    <input type="checkbox" name="module" value="overview" class="module-item" data-block="2">
+                                    <span>整体感知</span>
+                                </label>
+                                <label class="module-pill">
+                                    <input type="checkbox" name="module" value="reading" class="module-item" data-block="2">
+                                    <span>重点品读</span>
+                                </label>
+                                <label class="module-pill">
+                                    <input type="checkbox" name="module" value="theme" class="module-item" data-block="2">
+                                    <span>主题升华</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- 板块3 -->
+                        <div class="module-block">
+                            <div class="module-block-header">
+                                <label class="module-block-check">
+                                    <input type="checkbox" class="block-check" data-block="3" onchange="toggleBlock(this)">
+                                    <span class="module-block-title">📋 课堂小结</span>
+                                </label>
+                            </div>
+                            <div class="module-block-items">
+                                <label class="module-pill">
+                                    <input type="checkbox" name="module" value="summary" class="module-item" data-block="3">
+                                    <span>课堂小结</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- 板块4 -->
+                        <div class="module-block">
+                            <div class="module-block-header">
+                                <label class="module-block-check">
+                                    <input type="checkbox" class="block-check" data-block="4" onchange="toggleBlock(this)">
+                                    <span class="module-block-title">🌟 素质拓展</span>
+                                </label>
+                            </div>
+                            <div class="module-block-items">
+                                <label class="module-pill">
+                                    <input type="checkbox" name="module" value="expansion" class="module-item" data-block="4">
+                                    <span>素质拓展</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第五部分：API配置 -->
+            <div class="section">
+                <div class="section-title"><span class="section-icon">🔑</span>API 配置</div>
+                <div class="form-group">
+                    <label class="form-label">Claude API Key *</label>
+                    <input type="password" class="form-input" id="apiKey" placeholder="输入你的 Claude API Key">
+                    <div style="margin-top: 8px; display: flex; align-items: center; gap: 15px;">
+                        <label style="display: flex; align-items: center; cursor: pointer; font-size: 14px; color: #666;">
+                            <input type="checkbox" id="saveKey" style="margin-right: 5px;">
+                            <span>记住API Key（保存在本地浏览器）</span>
+                        </label>
+                        <button type="button" onclick="clearSavedKey()" style="padding: 4px 12px; font-size: 12px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">清除</button>
+                    </div>
+                    <p style="font-size: 12px; color: #666; margin-top: 5px;">💡 仅本地使用，不会上传</p>
+                </div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="generate-bar">
+                <div class="generate-bar-text">填好以上信息后，点击 <strong>生成脚本</strong> 即可获得完整逐字稿</div>
+                <div class="btn-group" style="margin-top:0;">
+                    <button class="btn btn-primary" onclick="generateScript()">🚀 生成脚本</button>
+                    <button class="btn btn-secondary" onclick="resetForm()">🔄 重置</button>
+                </div>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="loading-spinner"></div>
+                <p>正在生成脚本，请稍候...</p>
+            </div>
+
+            <div class="result-area" id="resultArea">
+                <div class="result-card">
+                    <div class="result-card-header">
+                        <div class="result-title">📄 生成结果</div>
+                        <div class="btn-group" style="margin-top:0;">
+                            <button class="btn btn-primary btn-sm" onclick="copyResult()">📋 复制</button>
+                            <button class="btn btn-secondary btn-sm" onclick="downloadResult()">💾 下载</button>
+                        </div>
+                    </div>
+                    <div class="result-content" id="resultContent"></div>
+                </div>
+            </div>
+
+            <div class="error-message" id="errorMessage"></div>
+            <div class="success-message" id="successMessage"></div>
+        </div>
+
+        <!-- 历史记录（底部） -->
+        <div class="history-section">
+            <div class="history-section-header">
+                <div class="history-section-title">🕘 生成历史 <span class="history-count" id="historyCount">0</span></div>
+                <span class="history-clear-btn" onclick="clearAllHistory()">清空全部</span>
+            </div>
+            <div class="history-list-bottom" id="historyList">
+                <div class="history-empty">暂无生成记录</div>
+            </div>
+        </div>
+
+    </div><!-- /container -->
+
+    <script>
+        // 参考模式切换
+        document.querySelectorAll('input[name="referenceMode"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                document.getElementById('referenceContent').style.display = 
+                    this.value === 'yes' ? 'block' : 'none';
+            });
+        });
+
+        // 参考类型切换
+        document.querySelectorAll('input[name="referenceType"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                document.getElementById('textReference').style.display = 'none';
+                document.getElementById('videoReference').style.display = 'none';
+                document.getElementById('fileReference').style.display = 'none';
+                if(this.value === 'text') document.getElementById('textReference').style.display = 'block';
+                if(this.value === 'video') document.getElementById('videoReference').style.display = 'block';
+                if(this.value === 'file') document.getElementById('fileReference').style.display = 'block';
+            });
+        });
+
+        // 生字选择模式切换
+        document.querySelectorAll('input[name="wordMode"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                document.getElementById('manualWords').style.display =
+                    this.value === 'manual' ? 'block' : 'none';
+            });
+        });
+
+        // 内容模式切换
+        document.querySelectorAll('input[name="contentMode"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const isLibrary = this.value === 'library';
+                document.getElementById('libraryContent').style.display = isLibrary ? 'block' : 'none';
+                document.getElementById('manualContent').querySelector('textarea').placeholder =
+                    isLibrary ? '选择课文后自动填充...' : '请粘贴完整的课文内容...';
+                if (!isLibrary) {
+                    document.getElementById('lessonContent').value = '';
+                    document.getElementById('lessonName').value = '';
+                }
+            });
+        });
+
+        // 年级选择变化时更新课文列表
+        document.getElementById('grade').addEventListener('change', populateLessonDropdown);
+
+        // 保存API Key到localStorage
+        function saveApiKey() {
+            const apiKey = document.getElementById('apiKey').value;
+            const shouldSave = document.getElementById('saveKey').checked;
+
+            if (shouldSave && apiKey) {
+                localStorage.setItem('claudeApiKey', apiKey);
+            } else {
+                localStorage.removeItem('claudeApiKey');
+            }
+        }
+
+        // 清除保存的API Key
+        function clearSavedKey() {
+            localStorage.removeItem('claudeApiKey');
+            document.getElementById('apiKey').value = '';
+            document.getElementById('saveKey').checked = false;
+            showSuccess('已清除保存的API Key');
+        }
+
+        // API Key输入框失焦时保存
+        document.getElementById('apiKey').addEventListener('blur', saveApiKey);
+        document.getElementById('saveKey').addEventListener('change', saveApiKey);
+
+        // 模块全选
+        document.getElementById('moduleAll').addEventListener('change', function() {
+            document.querySelectorAll('.module-item').forEach(cb => {
+                cb.checked = this.checked;
+            });
+            document.querySelectorAll('.block-check').forEach(cb => {
+                cb.checked = this.checked;
+            });
+        });
+
+        function toggleBlock(blockCheckbox) {
+            const block = blockCheckbox.dataset.block;
+            const checked = blockCheckbox.checked;
+            document.querySelectorAll(`.module-item[data-block="${block}"]`).forEach(cb => {
+                cb.checked = checked;
+            });
+            // 如果有一个板块被取消，取消"完整脚本"
+            if (!checked) document.getElementById('moduleAll').checked = false;
+        }
+
+        // 生成脚本主函数
+        async function generateScript() {
+            const lessonName = document.getElementById('lessonName').value;
+            const grade = document.getElementById('grade').value;
+            const lessonContent = document.getElementById('lessonContent').value;
+            const apiKey = document.getElementById('apiKey').value;
+
+            if (!lessonName || !grade || !lessonContent || !apiKey) {
+                showError('请填写所有必填项');
+                return;
+            }
+
+            const modules = getSelectedModules();
+            if (modules.length === 0) {
+                showError('请至少选择一个生成模块');
+                return;
+            }
+
+            showLoading(true);
+            hideMessages();
+
+            try {
+                const prompt = buildPrompt(lessonName, grade, lessonContent, modules);
+                const result = await callClaudeAPI(apiKey, prompt);
+                showResult(result);
+                saveHistory(lessonName, grade, result);
+                showSuccess('脚本生成成功！');
+            } catch (error) {
+                console.error('详细错误:', error);
+                let errorMsg = '生成失败：\n\n';
+                errorMsg += '错误类型: ' + error.name + '\n';
+                errorMsg += '错误信息: ' + error.message + '\n\n';
+                errorMsg += '可能的原因：\n';
+                errorMsg += '1. 网络连接问题\n';
+                errorMsg += '2. API端点无法访问\n';
+                errorMsg += '3. 需要连接公司VPN\n';
+                errorMsg += '4. API Key不正确\n\n';
+                errorMsg += '完整错误: ' + JSON.stringify(error, Object.getOwnPropertyNames(error));
+                showError(errorMsg);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function getSelectedModules() {
+            const modules = [];
+            if (document.getElementById('moduleAll').checked) {
+                return ['all'];
+            }
+            document.querySelectorAll('.module-item:checked').forEach(cb => {
+                modules.push(cb.value);
+            });
+            return modules;
+        }
+
+        function buildPrompt(lessonName, grade, lessonContent, modules) {
+            const keyPoints = document.getElementById('keyPoints').value;
+            const wordMode = document.querySelector('input[name="wordMode"]:checked').value;
+            const wordsInput = document.getElementById('wordsInput').value;
+            const referenceMode = document.querySelector('input[name="referenceMode"]:checked').value;
+            const referenceText = referenceMode === 'yes' ? document.getElementById('referenceText').value : '';
+
+            const moduleList = modules.includes('all')
+                ? ['字词学习', '情境导入', '整体感知', '重点品读', '主题升华', '课堂小结']
+                : modules.map(m => ({
+                    word: '字词学习', intro: '情境导入', overview: '整体感知',
+                    reading: '重点品读', theme: '主题升华', summary: '课堂小结', expansion: '素质拓展'
+                  }[m])).filter(Boolean);
+
+            let prompt = `你是一名资深的小学语文网课脚本编剧，专门为4-6年级学生撰写课堂教学逐字稿。请严格按照以下规范，为《${lessonName}》（${grade}）生成完整、高质量的教学逐字稿。
+
+【课文信息】
+课文名称：《${lessonName}》
+年级学段：${grade}
+${keyPoints ? `重难点提示：${keyPoints}` : ''}
+${wordMode === 'manual' && wordsInput ? `重点字词：${wordsInput}` : ''}
+${referenceText ? `参考资料：\n${referenceText}` : ''}
+
+【课文原文】
+${lessonContent}
+
+【需要生成的模块】
+${moduleList.join('、')}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+【脚本格式规范（必须严格遵守）】
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## 一、整体结构顺序
+每个模块按如下顺序展开（选择了哪些模块就写哪些）：
+
+### 字词学习模块
+结构：全屏引入提问 → 转场 → 逐字讲解（含角标） → 进阶闯关题
+
+### 课文理解模块
+结构：情境导入 → 整体感知（含思维导图） → 重点品读（逐段分析）→ 主题升华
+
+### 课堂小结模块
+结构：封面语 → 回顾本节生字词 → 回顾课文结构与情感 → 收尾
+
+---
+
+## 二、技术标注格式（括号内为制作说明，不是讲解内容）
+
+### 场景切换标注：
+（全屏出视频，无主讲，跟随语音出花字，加配音，加字幕，配欢快活泼音效）
+（转场，主讲授课）
+（封面页，花字：[模块名]）
+
+### 展示内容标注：
+（出示生字：X，楷体+拼音）
+（出示文字：X）
+（出示词语：X）
+（出示释义：X）
+（出示含义：X）
+（出示原文第X段）或（出示原文第X-Y段）
+（出示注释：X）
+（出示图片：X）（或：AI元素图：X）
+
+### 视觉效果标注：
+（标红：X）
+（高亮：X）
+（花字：X）
+（动效：X）
+
+### 角标格式（右上角模块标签）：
+（角标：字理识字）
+（角标：对比识字）
+（角标：看图识字）
+（角标：知识拓展）
+（角标：进阶闯关）
+（角标：情境导入）
+（角标：整体感知）
+（角标：重点品读）
+（角标：主题升华）
+（角标：主题思辨）
+（角标：说一说）
+（角标：课堂小结）
+
+---
+
+## 三、互动题目格式（【】内为交互设计，必须写完整）
+
+### 单选题：
+【单选交互 答案：X】
+题目：题干文字（  ）
+A. 选项一  B. 选项二  C. 选项三  D. 选项四
+[出答案后讲解为什么选X，其他选项错在哪里]
+
+### 多选题：
+【多选交互 答案：XX】
+题目：题干文字
+A. 选项一  B. 选项二  C. 选项三
+
+### 拖拽题：
+【大面板拖拽交互】题目：题干文字
+[被拖拽的内容格式描述]
+选项：选项1、选项2、选项3
+[出答案讲解]
+
+### 圈画题：
+【大面板圈画交互】题目：请你在文中找出……（出示原文段落）
+[出答案，高亮正确内容，讲解]
+
+### 语音朗读：
+【语音交互：词1、词2、词3】
+
+### 思考停顿：
+【停顿思考】
+
+### 主观语音题：
+【语音主观】题目：请你说一说……
+[出示参考答案]
+
+### 连线题：
+【大屏连线题】题目：请连一连……
+（左边：A、B、C；右边：甲、乙、丙）
+[出答案讲解]
+
+---
+
+## 四、字词学习写法规范
+
+每个重点生字按以下步骤写（每字不少于200字讲解）：
+
+**步骤1：角标+出示生字**
+（角标：字理识字）或（角标：对比识字）
+（出示生字：X，楷体+拼音；[部首]标红）
+
+**步骤2：字源/字理讲解**
+解释字的来源、部首含义、结构分析
+例："你看，'蟋'是虫字旁，虫字旁的字大多和昆虫有关……"
+
+**步骤3：字义+组词**
+给出1-3个义项，每个义项配组词和例句
+（出示含义：XX）（出示词语：XX）
+
+**步骤4：易混字对比（如有）**
+对比形近字/同音字，明确区别
+（角标：对比识字）
+
+**步骤5：语音练习**
+【语音交互：词1、词2、词3】
+
+**步骤6：练习题**
+配一道单选或拖拽题巩固
+
+**字词结束后的进阶闯关（2-3题）：**
+（角标：进阶闯关）
+[高频考点：拼音选择题、字形辨析题、词义理解题，至少各一道]
+
+---
+
+## 五、课文理解写法规范
+
+### 情境导入（100字以上）：
+- 用引人入胜的图片/视频描述+生动语言带入课文情境
+- 格式：（角标：情境导入）嗨，同学！……今天我们来学习《XXX》……
+
+### 整体感知（300字以上）：
+- 引导学生把握课文结构，拆分自然段/层次
+- 用思维导图呈现（出示思维导图，逐步呈现）
+- 配合小标题概括各部分
+- 出交互题：
+  【单选交互 答案：X】题目：下面哪个选项最准确概括了第X段的内容？
+
+### 重点品读（每个段落/句子300字以上）：
+- （角标：重点品读）
+- （出示原文第X段，楷体）
+- 分析写作手法：比喻、拟人、对比、以动衬静等（花字：修辞手法名）
+- 关键词深挖：（标红：关键词）"这个词……"
+- 思考停顿后揭示答案：【停顿思考】
+- 每个品读点后配互动题
+
+### 主题升华（200字以上）：
+- （角标：主题升华）
+- 总结课文主旨、情感、价值观
+- 联系生活实际：让学生说一说类似经历
+- 配语音主观题
+
+---
+
+## 六、语言风格要求
+
+1. **开场**：每个模块开头用"嗨，同学，你好呀！"或"嗨，同学！"
+2. **亲切口语**：像老师面对面讲课，用"你看""你发现了吗""是不是""诶～"
+3. **思考引导**：提问后用"【停顿思考】"让学生思考，再揭示答案
+4. **激励语**：答对后用"你选对了吗？""恭喜你！""你答对了吗？"
+5. **过渡语**：用"接下来……""好了，……""那我们继续来看……""让我们……"
+6. **反问句**：多用反问增强互动感，如"你不会……吧？""这不就是……吗？"
+7. **感叹词**：适当用"哦～""啊～""哇！""真的是这样呢！"
+8. **禁止**：不写"第一点、第二点"这种教案式列点；不写"本节课目标是……"；不用生硬的书面语
+
+---
+
+## 七、必须达到的内容量
+
+- 字词学习：每个重点生字≥200字讲解；进阶闯关≥2题
+- 整体感知：≥300字，含思维导图说明和至少1道交互题
+- 重点品读：每个重点句子/段落≥300字分析，含互动题
+- 全文总字数：≥3000字（不含标注符号）
+
+---
+
+## 八、示例片段（请参照此格式生成）
+
+### 示例：字理识字
+
+（全屏出视频，无主讲，跟随语音出花字，配欢快音效）
+（花字：潮？）你知道"观潮"的"潮"是什么意思吗？（出问号）
+
+（转场，主讲授课）
+
+（角标：字理识字）
+（出示生字：潮，楷体+拼音cháo；三点水旁标红）
+嗨，同学，你好呀！我们先来认识这个字——"潮"。你看，"潮"的左边是三点水旁（标红：三点水旁），凡是带三点水的字，大多和水有关。那右边的"朝"是什么意思呢？"朝"本来有"早晨"的意思，古人发现海水每天早晨涨起来，所以就用"朝"来造了"潮"这个字，表示海水定时涨落。
+（出示含义：海水或江河水定时涨落的现象）
+所以"潮"的本义就是潮水，海水定时涨落的现象。可以组词——（出示词语：潮水）潮水，（出示词语：涨潮）涨潮，（出示词语：退潮）退潮。你还能想到哪些带"潮"字的词语？
+【停顿思考】
+比如还有"潮流""潮湿"……"潮"在不同词语里含义可以不一样哦。
+【语音交互：潮水、涨潮、退潮】
+
+---
+
+### 示例：重点品读
+
+（角标：重点品读）
+（出示原文：浪潮越来越近，犹如千万匹白色战马齐头并进，浩浩荡荡地飞奔而来；那声音如同山崩地裂，好像大地都被震得颤动起来。）
+
+我们来看这句话——"浪潮越来越近，犹如千万匹白色战马齐头并进，浩浩荡荡地飞奔而来；那声音如同山崩地裂，好像大地都被震得颤动起来。"
+（高亮：犹如千万匹白色战马齐头并进）
+这里，作者把钱塘江大潮比作了什么？【停顿思考】
+对！比作了千万匹白色战马（花字：比喻）。这是一个比喻句，把浪潮比作战马，你有没有想象出来那种万马奔腾的气势？（标红：犹如、如同）"犹如"和"如同"都是比喻词，说明这是打比方。
+（花字：声势浩大）
+而"山崩地裂"这个词（标红：山崩地裂），是说山崩塌了、地裂开了，用来形容声音之大，让你感受到什么？【停顿思考】
+是不是感受到了那种震耳欲聋、天崩地裂的巨响！作者用这样夸张的比喻，把我们带入了现场，仿佛亲眼看到了那波澜壮阔的钱塘江大潮。
+
+【单选交互 答案：A】
+题目："浪潮越来越近，犹如千万匹白色战马齐头并进"这句话运用了什么修辞手法？
+A. 比喻  B. 拟人  C. 排比  D. 夸张
+（动效：A高亮）正确答案是A。"犹如"是比喻词，把浪潮比作白色战马，体现了比喻修辞手法，你选对了吗？
+
+---
+
+现在，请按照以上所有规范，生成《${lessonName}》（${grade}）完整的教学逐字稿。
+
+要求：
+- 必须生成完整脚本，不能只写大纲或标题
+- 必须严格使用（）标注制作说明，【】标注交互设计
+- 每个角标后面必须紧跟详细的教学内容，不能只写角标没内容
+- 全文必须是逐字稿格式：每一句老师要说的话都写出来
+- 语言必须亲切自然，像老师对学生面对面讲课
+- 全文不少于3000字`;
+
+            return prompt;
+        }
+
+        async function callClaudeAPI(apiKey, prompt) {
+            try {
+                console.log('开始调用API...');
+                console.log('API Key:', apiKey.substring(0, 10) + '...');
+                console.log('Prompt长度:', prompt.length);
+
+                // 直接调用Claude API
+                const response = await fetch('https://api.anthropic.com/v1/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': apiKey,
+                        'anthropic-version': '2023-06-01'
+                    },
+                    body: JSON.stringify({
+                        model: 'claude-sonnet-4-6',
+                        max_tokens: 8192,
+                        messages: [{role: 'user', content: prompt}]
+                    })
+                });
+
+                console.log('收到响应');
+                const responseText = await response.text();
+                console.log('响应状态:', response.status);
+                console.log('响应内容:', responseText.substring(0, 200));
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${responseText}`);
+                }
+
+                const data = JSON.parse(responseText);
+                return data.content[0].text;
+            } catch (error) {
+                console.error('完整错误信息:', error);
+
+                // 如果是CORS错误，提供友好提示
+                if (error.message.includes('Failed to fetch') || error.message.includes('CORS')) {
+                    throw new Error(`⚠️ 浏览器安全限制导致调用失败\n\n📌 解决方法（3选1）：\n\n方法1：使用本地代理（推荐）\n1. 打开命令行，进入文件目录\n2. 运行：node proxy-server.js\n3. 刷新页面重试\n\n方法2：使用Python服务器\n1. 命令行运行：python -m http.server 8000\n2. 访问：http://localhost:8000/脚本生成工具.html\n\n方法3：安装浏览器扩展\n安装 "CORS Unblock" 扩展后重试\n\n详见：使用说明.txt`);
+                }
+
+                throw new Error(`调用失败: ${error.message}`);
+            }
+        }
+
+        function showResult(text) {
+            document.getElementById('resultContent').textContent = text;
+            document.getElementById('resultArea').style.display = 'block';
+        }
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('errorMessage');
+            el.style.whiteSpace = 'pre-wrap';
+            el.textContent = msg;
+            el.style.display = 'block';
+        }
+
+        function showSuccess(msg) {
+            const el = document.getElementById('successMessage');
+            el.textContent = msg;
+            el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 3000);
+        }
+
+        function hideMessages() {
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+
+        function copyResult() {
+            const text = document.getElementById('resultContent').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                showSuccess('已复制到剪贴板');
+            });
+        }
+
+        function downloadResult() {
+            const text = document.getElementById('resultContent').textContent;
+            const lessonName = document.getElementById('lessonName').value;
+            const blob = new Blob([text], {type: 'text/plain;charset=utf-8'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${lessonName}_脚本.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function resetForm() {
+            if (confirm('确定要重置表单吗？')) {
+                document.querySelectorAll('input, textarea, select').forEach(el => {
+                    if (el.type === 'checkbox' || el.type === 'radio') {
+                        el.checked = false;
+                    } else {
+                        el.value = '';
+                    }
+                });
+                document.getElementById('resultArea').style.display = 'none';
+                hideMessages();
+            }
+        }
+
+        // 教材库数据
+        const textbookLibrary = {
+            '四年级上册': [
+                {
+                    id: '1',
+                    title: '1 观潮',
+                    content: `钱塘江大潮，自古以来被称为天下奇观。
+
+我们来到了海宁市的盐官镇，据说这里是观潮最好的地方。我们随着观潮的人群，登上了海塘大堤。宽阔的钱塘江横卧在眼前。江面很平静，越往东越宽，在雨后的阳光下，笼罩着一层蒙蒙的薄雾。镇海古塔、中山亭和观潮台屹立在江边。远处，几座小山在云雾中若隐若现。江潮还没有来，海塘大堤上早已人山人海。大家昂首东望，等着，盼着。
+
+午后一点左右，从远处传来隆隆的响声，好像闷雷滚动。顿时人声鼎沸，有人告诉我们，潮来了！我们踮着脚往东望去，江面还是风平浪静，看不出有什么变化。过了一会儿，响声越来越大，只见东边水天相接的地方出现了一条白线，人群又沸腾起来。
+
+那条白线很快地向我们移来，逐渐拉长，变粗，横贯江面。再近些，只见白浪翻滚，形成一堵高高的水墙。浪潮越来越近，犹如千万匹白色战马齐头并进，浩浩荡荡地飞奔而来；那声音如同山崩地裂，好像大地都被震得颤动起来。
+
+霎时，潮头奔腾西去，可是余波还在漫天卷地般涌来，江面上依旧风号浪吼。过了好久，钱塘江才恢复了平静。`
+                },
+                {
+                    id: '2',
+                    title: '2 走月亮',
+                    content: `秋天的夜晚，月亮升起来了，从洱海那边升起来了。
+
+是在洱海里淘洗过吗？月盘是那样明亮，月光是那样柔和，照亮了高高的点苍山，照亮了村头的大青树，也照亮了，照亮了村间的大道和小路……
+
+这时候，阿妈喜欢牵着我，在洒满月光的小路上走着，走着……啊，我和阿妈走月亮！
+
+细细的溪水，流着山草和野花的香味，流着月光。灰白色鹅卵石布满河床。哟，卵石间有多少可爱的小水塘啊，每个小水塘都抱着一个月亮！哦，阿妈，白天你在溪里洗衣裳，而我，用树叶做小船，运载许多新鲜的花瓣……哦，阿妈，我们到溪边去吧，去看看小水塘，看看水塘里的月亮，看看我采过野花的地方。
+
+啊，我和阿妈走月亮……
+
+村道已经修补过，坑坑洼洼的地方已经填上碎石和新土。就要收庄稼了，收庄稼前，要把道路修一修，补一补，这是村里的风俗。秋虫唱着，夜鸟拍打着翅膀，鱼儿跃出水面，泼刺声里银光一闪……从果园那边飘来果子的甜香，是雪梨，是火把梨，还是紫葡萄？都有。
+
+在坡头那片月光下的果园里，这些好吃的果子挂满枝头。沟水汩汩，很满意地响着。是啊，它旁边，是它浇灌过的稻田。哦，阿妈，这不就是我们家的地吗？春天，我们种的油菜开花了，我在田地里找兔草，我把蒲公英吹得飞啊飞……收了油菜，栽上水稻。看，稻谷就要成熟了，稻穗低垂着头，稻田像一块月光镀亮的银毯。哦，阿妈，我们到田埂上去吧，你不是说学校放假了，阿爸就要回来了吗？我们采哪一塘新谷招待阿爸呢？
+
+啊，我和阿妈走月亮……
+
+有时，阿妈给我讲月亮的故事，一个古老的传说；有时，却什么也不讲，只是静静地走着，走着。走过月光闪闪的溪岸，走过石拱桥，走过月影团团的果园，走过庄稼地和菜地……啊，在我仰起脸看阿妈的时候，我突然看见，美丽的月亮牵着那些闪闪烁烁的小星星，好像也在天上走着，走着……
+
+多么奇妙的夜晚啊，我和阿妈走月亮！`
+                },
+                {
+                    id: '18',
+                    title: '18 牛和鹅',
+                    content: `大家都说：牛的眼睛看人，觉得人比牛大，所以牛是怕人的；鹅的眼睛看人，觉得人比鹅小，所以鹅不怕人。我们都很相信这句话。
+
+所以我们看到牛，一点儿不害怕，敢用手拍它的背，摸它的肚子，甚至敢用树枝去触它的屁股呢！可是牛像是无所谓似的，只是眨眨眼，把尾巴甩几甩。
+
+我们看到鹅，那就完全两样了：总是远远地站在安全的地方，才敢看它。要是在路上碰到鹅，就得绕个大圈子才敢走过去。
+
+有一次，我们放学回家，走过池塘边，看见有四只大白鹅在靠近岸边的水里游。我们马上都不说话了，贴着墙壁，悄悄地走过去。这时，有一个顽皮的孩子故意要引它们来，就呼哩哩哩地叫了一声。鹅听见了，就竖起头来，侧着眼睛看了看，竟爬到岸上，一摇一摆地、神气地朝我们走过来；还伸长脖子，嘎嘎地叫着，扑打着大翅膀，好像在它们眼里根本没有我们这些人似的。
+
+孩子们惊呼起来，急急逃跑，鹅追得更快了。我吓得脚也软了，更跑不快。这时，带头的那只老公鹅就啪嗒啪嗒地跑了过来，嘎嘎，它赶上了我，嘎嘎，它张开嘴，一口就咬住了我当胸的衣襟，拉住我不放。在忙乱中，我的书包掉了，鞋子也弄脱了。我想，它一定要把我咬死了。我就又哭又叫。
+
+也许是我的哭叫更惹怒了这只老公鹅。它用全身的力量来拖我，啄我，扇动翅膀来扑打我。我几乎被它拖倒了——因为当时我还很小，只不过跟它一样高呢！其他几只鹅在后面嘎嘎大叫着助威。
+
+就在这时候，池塘里划来了一只小船，捉鱼的金奎叔从船里跳上岸，飞快地走了过来。金奎叔是个结实的汉子，他的胳膊比我的腿还粗。他一把握住了鹅的长脖子。鹅用脚爪划他，用嘴啄他。可是金奎叔的力气是那么大，他轻轻地把鹅提了起来，然后就像摔一个酒瓶似的，呼的一下，把这只老公鹅甩到了半空中。它张开翅膀，啪啪啪地落到了池塘中。这一下，其余三只鹅也怕了，纷纷张开翅膀，跳进池塘里，向远处游去。
+
+这一摔是那么痛快，远处的孩子们全笑了起来，我也挂着泪笑了。一切的恐怖，全消失了。因为在金奎叔的手里，鹅是那么弱，那么可笑，它，不过跟一个酒瓶子一样罢了！
+
+金奎叔帮我穿上鞋，拾起书包，用大手摸摸我的头，说："鹅有什么可怕的！看把你吓成这样。"
+
+我说："因为鹅把我们看得比它小哇！"
+
+金奎叔说："让它这样看好了！可是，它要是凭这点来欺负人，那咱们可不答应，就得掐住它的脖子，把它摔到池塘里去。记着，霖哥儿，下次可别怕它们。"
+
+我记住金奎叔的话，从此不怕鹅了。有什么可怕的！虽然它把我们看得比它小，可我们实在比它强啊！怕它干吗？果然，我不怕它，它也不敢咬我，碰到了，只是嘎嘎叫几声，扇几下翅膀，就摇摇摆摆走开了。
+
+看到牛，我也不再无缘无故欺负它了。我觉得虽然它把我们看得比它大，可我们平白地去欺负它干吗？
+
+直到现在，我还记着金奎叔的话。`
+                },
+                {
+                    id: '10',
+                    title: '10 爬山虎的脚',
+                    content: `学校操场北边墙上满是爬山虎。我家也有爬山虎，从小院的西墙爬上去，在房顶上占了一大片地方。
+
+爬山虎刚长出来的叶子是嫩红的，不几天叶子长大，就变成嫩绿的。爬山虎的嫩叶，不大引人注意，引人注意的是长大了的叶子。那些叶子绿得那么新鲜，看着非常舒服。叶尖一顺儿朝下，在墙上铺得那么均匀，没有重叠起来的，也不留一点儿空隙。一阵风拂过，一墙的叶子就漾起波纹，好看得很。
+
+以前，我只知道这种植物叫爬山虎，可不知道它怎么能爬。今年，我注意了，原来爬山虎是有脚的。爬山虎的脚长在茎上。茎上长叶柄的地方，反面伸出枝状的六七根细丝，这些细丝很像蜗牛的触角。细丝跟新叶子一样，也是嫩红的。这就是爬山虎的脚。
+
+爬山虎的脚触着墙的时候，六七根细丝的头上就变成小圆片，巴住墙。细丝原先是直的，现在弯曲了，把爬山虎的嫩茎拉一把，使它紧贴在墙上。爬山虎就是这样一脚一脚地往上爬。如果你仔细看那些细小的脚，你会想起图画上蛟龙的爪子。
+
+爬山虎的脚要是没触着墙，不几天就萎了，后来连痕迹也没有了。触着墙的，细丝和小圆片逐渐变成灰色。不要瞧不起那些灰色的脚，那些脚巴在墙上相当牢固，要是你的手指不费一点儿劲，休想拉下爬山虎的一根茎。`
+                },
+                {
+                    id: '19',
+                    title: '19 一只窝囊的大老虎',
+                    content: `我念的那所小学每星期六下午全校开周会，会上总有文艺表演。由十二个班级轮流演出，每个学期一个班级至多轮到两次。
+
+我一直没在台上露过面，看着同班的小朋友在台上又唱又跳，边说边比画，我真个羡慕得要死。我多想在台上露露脸，尝尝大家都看着我、给我鼓掌是什么味道。
+
+有一回又轮到我们班表演，班主任在分派角色的时候，我殷切期待的目光可能引起了她的注意。分派到最后，她看了我半晌才下决心说："就这样吧，你扮老虎。"
+
+这一回我们班演的是《兄妹历险记》，中间有这么一段情节：兄妹俩在森林里迷了路，碰上一只大老虎。我就扮这只大老虎，用不着说话。
+
+于是开始排练。我套上老虎皮，那是一件画着黑道道的黄布连衣裤，背后拖着一条硬邦邦的尾巴，穿上了手脚都不露。还得套上个纸糊的老虎头，那老虎头也是黄底子上画着黑道道，额头正中还有个"王"字。
+
+这倒好，脸还是露不成。捧着严严实实的"头盔"，我正发愣。那个演哥哥的小朋友还故意逗我："你会豁虎跳吗？"
+
+"不会。"我只好照实回答。
+
+"不会豁虎跳算什么老虎？"他撇了撇嘴。
+
+真没想到，事到临头还会出现危机。我看着老师的脸，就怕她改变主意。
+
+老师真是个通情达理的好老师。她说："不要紧，扮老虎不一定要豁虎跳。你先四脚着地爬上台，见了他们兄妹俩就站起来，啊呜啊呜叫着，向他们扑过去，他们逃，你就追。等到猎人上场，对你连开两枪，你就躺下来——死掉。记住了吗？"
+
+"记住了！"我连忙答应。我有充分的自信。
+
+套上老虎头，一股霉糊味儿直冲脑门，眼前也一片模糊。亏得眼睛那儿挖了两个小窟窿，要不就什么也看不见了。
+
+我弯下身子向前爬，老师在一旁不断地提示："向前爬，再向前爬，快站起来，你没看见他们吗？向他们扑过去！唉，你怎么不叫哇？嗓门要大。别忘了你不是猫，你是一只大老虎！"
+
+我还以为扮老虎是最容易不过的了，不用说话，不用露脸，没想到也这么难。
+
+看来老师对我的演技并不满意，她倒没说什么。那位演哥哥的小朋友话可多了，说我这只老虎太窝囊，连豁虎跳也不会，只会在地上爬，还说他从没见过不会豁虎跳的老虎。随他说去吧，我这个配角虽然配不上他，可是老师没撤换我，他也只好将就。
+
+终于到了星期六，到了下午，到了我们班演出的那个时刻。
+
+我穿上老虎皮，套上老虎头，紧张地等候在后台的上场口。忽然背后有人轻轻推了我一把。我知道推我的是老师，立刻弯下身子爬上场去，嘴里啊呜啊呜直叫。只听见台下一阵哄堂大笑，笑得我脸上一阵热。我已经明白，我笨拙的表演把全场的老师同学都逗乐了，他们从没见过这样窝囊的老虎。
+
+我总算一直演到了躺下来死掉。到底怎么演完的，我一点儿也记不起来，只记得耳边的笑声接连不断。等到幕布拉下，我站起来摘下老虎头，满头满脸都是汗珠。
+
+老师倒没说什么。那位演哥哥的小朋友唉声叹气地对我说："你一出场就豁几个虎跳，那就强多了。"我没回答他，可是心里想：是啊，要是我会豁虎跳，这场戏就不至于砸锅了。
+
+后来呢？后来我发誓，今后决不再扮演老虎。可是每回上动物园，我总要去看看老虎，想看看老虎是怎么豁虎跳的。可是老虎在笼子里不是打瞌睡，就是垂头丧气地踱来踱去，从没见过它们豁过什么虎跳。
+
+为什么不会豁虎跳就不能扮老虎呢？为什么没豁虎跳就会惹起哄堂大笑呢？我至今还不明白。`
+                },
+                {
+                    id: '11',
+                    title: '11 蟋蟀的住宅',
+                    content: `居住在草地上的蟋蟀，差不多和蝉一样有名。它的出名不光由于它的唱歌，还由于它的住宅。
+
+别的昆虫大多在临时的隐蔽所藏身。它们的隐蔽所得来不费功夫，弃去毫不可惜。蟋蟀和它们不同，不肯随遇而安。它常常慎重地选择住址，一定要排水优良，并且有温和的阳光。它不利用现成的洞穴。它的舒服的住宅是自己一点儿一点儿挖掘的，从大厅一直到卧室。
+
+蟋蟀怎么会有建筑住宅的才能呢？它有特别好的工具吗？没有。蟋蟀并不是挖掘技术的专家，它的工具是那样柔弱，所以人们对它的劳动成果感到惊奇。
+
+在朝着阳光的斜坡上，青草丛中隐藏着一条倾斜的隧道，即使有骤雨，这里也立刻就会干的。隧道顺着地势弯弯曲曲，最多九寸深，一指宽，这便是蟋蟀的住宅。出口的地方总有一丛草半掩着，就像一座门。蟋蟀出来吃周围的嫩草，绝不去碰这一丛草。那微斜的门口，经过仔细耙扫，收拾得很平坦。这就是蟋蟀的平台。当四周很安静的时候，蟋蟀就在这平台上弹琴。
+
+屋子的内部没什么布置，但是墙壁很光滑。主人有的是时间，把粗糙的地方修理平整。大体上讲，住所是很简朴的，清洁、干燥，很卫生。假使我们想到蟋蟀用来挖掘的工具是那样简单，这座住宅真可以算是伟大的工程了。
+
+蟋蟀盖房子大多是在十月，秋天初寒的时候。它用前足扒土，还用钳子似的大颚搬掉较大的土块。它用强有力的后足踏地。后腿上有两排锯，用它们将泥土推到后面，倾斜地铺开。
+
+工作做得很快。蟋蟀钻到土底下干活，如果感到疲劳，它就在未完工的家门口休息一会儿，头朝着外面，触须轻微地摆动。不大一会儿，它又进去继续工作。
+
+住宅的重要部分快完成了。洞已经挖了有两寸深，够宽敞的了。余下的是长时间的整修，今天做一点儿，明天做一点儿。这个洞可以随天气的变冷和它身体的增长而加深加阔。即使在冬天，只要天气温和，太阳晒到它住宅的门口，还可以看见蟋蟀从里面不断地抛出泥土来。`
+                },
+                {
+                    id: '6',
+                    title: '6 夜间飞行的秘密',
+                    content: `清朗的夜空出现两个亮点，越来越近，才看清楚是一红一绿的两盏灯。接着传来了隆隆声，这是一架飞机在夜航。
+
+在漆黑的夜里，飞机是怎么做到安全飞行的呢？要想了解其中的秘密，我们可以从蝙蝠说起。
+
+蝙蝠能在夜里飞行，还能捕捉飞蛾和蚊子；而且无论怎么飞，从来没见过它跟什么东西相撞，即使一根极细的电线，它也能灵巧地避开。难道它的眼睛特别敏锐，能在漆黑的夜里看清楚所有的东西吗？
+
+为了弄清楚这个问题，两百多年前，科学家做了一次实验。他们在一间屋子里横七竖八地拉了许多绳子，绳子上系了许多铃铛，然后把蝙蝠的眼睛蒙上，让它在屋子里飞。蝙蝠飞了几个钟头，铃铛一个也没响，那么多的绳子，它一根也没碰着。
+
+科学家又做了两次实验：一次把蝙蝠的耳朵塞上，一次把蝙蝠的嘴封住，让它在屋子里飞。蝙蝠就像没头苍蝇似的到处乱撞，挂在绳子上的铃铛响个不停。
+
+三次实验的结果证明，蝙蝠夜里飞行，靠的不是眼睛，而是靠嘴和耳朵配合起来探路的。
+
+后来，科学家经过反复研究，终于揭开了蝙蝠能在夜里飞行的秘密。它一边飞，一边从嘴里发出超声波。人的耳朵听不见超声波，蝙蝠的耳朵却能听见。超声波向前传播时，遇到障碍物就反射回来，传到蝙蝠的耳朵里，蝙蝠就立刻改变飞行的方向。
+
+现代飞机上安装了雷达，雷达的工作原理与蝙蝠探路类似。雷达通过天线发出无线电波，无线电波遇到障碍物就反射回来，被雷达接收到，显示在荧光屏上。从雷达的荧光屏上，驾驶员能够清楚地看到前方有没有障碍物，所以飞机飞行就更安全了。`
+                },
+                {
+                    id: '20',
+                    title: '20 陀螺',
+                    content: `在我的故乡，陀螺不叫陀螺，叫作"冰尜儿"。顾名思义，就是冰上的小家伙。
+
+做冰尜儿用的是木头，柳木、榆木、松木、枣木、梨木都可以。抽打冰尜儿，当然是在冬季的冰天雪地里，最好的场所是冰面。好的冰尜儿尖部嵌一颗滚珠，转起来能增加许多妩媚。顶不济的，也要钉上一枚铁钉，否则转不了多少圈，尖部就会开裂。
+
+抽冰尜儿的小伙伴们，都爱比个高下。他们往往各站一角，奋力抽转自己的冰尜儿，让它朝对方撞去。这时你看吧，两只旋转的陀螺奋勇搏斗，旋风般撞向对手，刚一接触，又各自闪向一边，然后重整旗鼓再战——直到其中一方被撞翻才告一段落。
+
+我从小就不甘人后，更不愿自己的陀螺像金兵见到岳家军，一战即败。于是四处寻找木头，为削出得心应手的陀螺，就差没把椅子腿拿来"废物利用"了。为此不知挨了多少责骂，可仍然不肯住手。然而一个孩子无论如何是削不出高质量的陀螺的，因此，曾有很长一段时间我的世界堆满乌云，快乐像过冬的燕子一般，飞到一个谁也看不到的地方去了。
+
+这种懊恼终于引起了长辈的注意。我的叔叔，一位很有童心的年轻民警，答应在我生日那天送我一只陀螺。这消息曾使我一整天处于恍惚的状态，老想象着那只陀螺英武的风姿。
+
+叔叔的礼物不错！这只陀螺不是人工削出来的，而是一位木工在旋床上旋出来的，圆且光滑，如同一枚鸭蛋。虽然它远不如我想象中的那么漂亮，但我极高兴地接受了它。尤其当我看到这枚"鸭蛋"的下端已嵌上一粒大滚珠时，更是手舞足蹈，恨不得马上在马路上一显身手！
+
+我的陀螺刚一露面，就招来了一顿嘲笑。的确，在各色帅气的陀螺面前，它长得不伦不类，该平的地方不平，该尖的地方不尖，看不出一丝一毫与同伴相斗的能力。这使我士气大减，只是在一旁抽打，不敢向任何人挑战。
+
+然而世间许多事都是不可预料的，追求"和平"只是我的个人愿望，小伙伴们不甘寂寞，一个大陀螺的主人开始傲慢地向我挑衅。
+
+大陀螺摇头晃脑，挺着肚皮一次次冲过来，我的"鸭蛋"则不动声色地闪躲。一次次冲击，一次次闪躲，终于无法避开，它们狠狠地撞上了！
+
+奇怪的是，我的陀螺个头小，却顽强得出奇！明明被撞翻在一边，一扭身又照样旋转起来。它圆头圆脑，好像上下左右都能找到支撑点似的。结果呢，大陀螺在这个始终立于不败之地的对手面前，彻底溃败了。
+
+这真是个辉煌的时刻！我尝到了胜利的滋味，品到了幸运的甜头。无意中获得的"荣誉"，虽然小如微尘，对好胜的孩子来说，也足以陶醉许久了——直到现在我还能兴致勃勃地写下这些文字，便是一种有力的证明吧！
+
+我的冰尜儿，木工随便旋出的小木头块，丑小鸭生出的一只丑鸭蛋，在童年的一个冬日里，给了我极大的欢乐和由衷的自豪。
+
+这真应了一句古话：人不可貌相，海水不可斗量。`
+                },
+                {
+                    id: '12',
+                    title: '12 盘古开天地',
+                    content: `很久很久以前，天和地还没有分开，宇宙混沌一片，像个大鸡蛋。有个叫盘古的巨人，在混沌之中睡了一万八千年。
+
+有一天，盘古醒来了，睁眼一看，周围黑乎乎一片，什么也看不见。他一使劲翻身坐了起来，只听咔嚓一声，"大鸡蛋"裂开了一条缝，一丝微光透了进来。巨人见身边有一把斧头，就拿起斧头，对着眼前的黑暗劈过去，只听见一声巨响，"大鸡蛋"碎了。轻而清的东西，缓缓上升，变成了天；重而浊的东西，慢慢下降，变成了地。
+
+天和地分开后，盘古怕它们还会合在一起，就头顶天，脚踏地，站在天地当中，随着它们的变化而变化。天每天升高一丈，地每天加厚一丈，盘古的身体也跟着长高。
+
+这样过了一万八千年，天升得高极了，地变得厚极了。盘古这个巍峨的巨人就像一根柱子，撑在天和地之间，不让它们重新合拢。又不知过了多少年，天和地终于成形了，盘古也精疲力竭，累得倒下了。
+
+盘古倒下以后，他的身体发生了巨大的变化。他呼出的气息变成了四季的风和飘动的云；他发出的声音化作了隆隆的雷声；他的左眼变成了太阳，照耀大地，他的右眼变成了月亮，给夜晚带来光明；他的四肢和躯干变成了大地的四极和五方的名山；他的血液变成了奔流不息的江河；他的汗毛变成了茂盛的花草树木；他的汗水变成了滋润万物的雨露……
+
+伟大的巨人盘古，用他的整个身体创造了美丽的世界。`
+                },
+                {
+                    id: '21',
+                    title: '21 古诗三首',
+                    content: `出塞
+[唐]王昌龄
+
+秦时明月汉时关，
+万里长征人未还。
+但使龙城飞将在，
+不教胡马度阴山。
+
+凉州词
+[唐] 王翰
+
+葡萄美酒夜光杯，
+欲饮琵琶马上催。
+醉卧沙场君莫笑，
+古来征战几人回？
+
+夏日绝句
+[宋] 李清照
+
+生当作人杰，
+死亦为鬼雄。
+至今思项羽，
+不肯过江东。`
+                },
+                {
+                    id: '13',
+                    title: '13 精卫填海',
+                    content: `炎帝之少女，名曰女娃。女娃游于东海，溺而不返，故为精卫，常衔西山之木石，以堙于东海。`
+                },
+                {
+                    id: '7',
+                    title: '7 呼风唤雨的世纪',
+                    content: `20世纪是一个呼风唤雨的世纪。
+
+是谁来呼风唤雨呢？当然是人类。靠什么呼风唤雨呢？靠的是现代科学技术。在20世纪100年的时间里，人类利用现代科学技术获得了那么多奇迹般的、出乎意料的发现和发明。正是这些发现和发明，使人类的生活大大改观，其改变的程度超过了人类历史上百万年的总和。
+
+人类在上百万年的历史中一直很依赖自然，生活在一个慢吞吞、静悄悄、一到夜里就黑暗无光的世界。那时没有收音机，没有电视，没有飞机，更没有宇宙飞船。人们只能在神话中用"千里眼""顺风耳"和腾云驾雾的神仙，来寄托自己的美好愿望。我们的祖先大概谁也没有料到，他们的那么多幻想在现代纷纷变成了现实。20世纪的成就，真可以用"忽如一夜春风来，千树万树梨花开"来形容。
+
+20世纪，人类登上月球，潜入深海，洞察百亿光年外的天体，探索原子核世界的奥秘；20世纪，电视、程控电话、因特网以及民航飞机、高速火车、远洋船舶等，日益把人类居住的星球变成联系紧密的"地球村"。人类生活的舒适、方便，是连过去的王公贵族也不敢想的。科学在改变着人类的精神文化生活，也在改变着人类的物质生活。
+
+1923年，英国数学家、哲学家伯特兰·罗素说："归根到底，是科学使得我们这个时代不同于以往的任何时代。"现在，这句话依然适用。回顾20世纪的百年历程，科学的确创造了一个又一个神话，为人类创造了比以往任何时代都要美好的生活。在新的世纪里，现代科学技术必将继续创造一个个奇迹，不断改善我们的生活。`
+                },
+                {
+                    id: '22',
+                    title: '22 为中华之崛起而读书',
+                    content: `新学年开始了，修身课上，奉天东关模范学校的魏校长向学生们提出了一个严肃的问题："你们为什么而读书？"
+
+"为家父而读书。"
+"为明理而读书。"
+"为光耀门楣而读书。"有人干脆这样回答。
+
+有位同学一直默默地坐在那里，若有所思。魏校长注意到了，他打手势让大家安静下来，点名让那位同学回答。那位同学站了起来，清晰而坚定地回答道：
+
+"为中华之崛起而读书！"
+
+魏校长听了为之一振！他怎么也没想到，一个十二三岁的孩子，竟然有如此的抱负和胸怀！他睁大眼睛又追问了一句："你再说一遍，为什么而读书？"
+
+"为中华之崛起而读书！"
+
+魏校长听了，连声赞叹："好哇！为中华之崛起，有志者当效此生！"
+
+这位同学是谁呢？他就是周恩来，后来成为了中华人民共和国的第一任总理。
+
+周恩来出生于1898年。十二岁那年，他离开家乡江苏淮安，随回家探亲的伯父来到了东北。在奉天上学的时候，伯父告诉他，奉天有些地方被外国人占据了，不要随便去玩，有事也要绕着走，免得惹出麻烦没有地方说理。
+
+少年周恩来疑惑不解，问道："被外国人占据？为什么呢？"
+
+"中华不振哪！"伯父叹了口气，没有再说什么。
+
+十二岁的周恩来当然不能完全明白伯父的话，但是"中华不振"四个字和伯父沉郁的表情却让他难以忘怀。
+
+一个星期天，周恩来背着伯父，约了一个同学来到了被外国人占据的地方。这一带果真和别处大不相同：街道上热闹非凡，往来的大多是外国人。
+
+周恩来和同学一路上左顾右盼，忽然发现巡警局门前围着一群人。他们凑了过去，只见人群中有个女人正在哭诉着什么。一问才知道，这个女人的亲人被外国人的汽车轧死了，她原本指望巡警局给她撑腰，惩处这个外国人，谁知中国巡警不但不惩处肇事的外国人，反而训斥她。围观的中国人都紧握着拳头，但这是在被外国人占据的地盘里，谁又敢怎么样呢？大家只能劝慰这个不幸的女人。
+
+此时的周恩来才真正体会到"中华不振"这四个字的沉重分量。怎么把祖国和人民从苦难和屈辱中拯救出来呢？这个问题像一团烈火一直燃烧在周恩来心中。所以，当修身课上魏校长提出为什么而读书这个问题时，就有了"为中华之崛起而读书"的响亮回答。`
+                },
+                {
+                    id: '14',
+                    title: '14 普罗米修斯',
+                    content: `很久很久以前，地面上没有火，人们只好吃生的东西，在无边的黑暗中度过一个又一个长夜。就在这时候，有一位名叫普罗米修斯的天神来到了人间，看到人类没有火的悲惨情景，决心冒着危险，到天上去"盗"取火种。
+
+有一天，当太阳车从天空驰过的时候，普罗米修斯跑到太阳车那里，从喷射着火焰的车轮上，拿了一颗火星，带到人间。自从有了火，人类就开始用它烧熟食物，驱寒取暖，并用火来驱赶危害人类安全的猛兽……
+
+得知普罗米修斯从天上取走火种的消息，众神的领袖宙斯气急败坏，决定给普罗米修斯以最严厉的惩罚，吩咐火神立即执行。
+
+火神很敬佩普罗米修斯，悄悄对他说："只要你向宙斯承认错误，归还火种，我一定请求他饶恕你。"
+
+普罗米修斯摇摇头，坚定地回答："为人类造福，有什么错？我可以忍受各种痛苦，但决不会承认错误，更不会归还火种！"
+
+火神不敢违抗宙斯的命令，只好把普罗米修斯押到高加索山上。普罗米修斯的双手和双脚戴着铁环，被死死地锁在高高的悬崖上。他既不能动弹，也不能睡觉，日夜遭受着风吹雨淋的痛苦。尽管如此，普罗米修斯就是不向宙斯屈服。
+
+狠心的宙斯又派了一只凶恶的鹫鹰，每天站在普罗米修斯的双膝上，用它尖利的嘴巴，啄食他的肝脏。白天，他的肝脏被吃光了，可是一到晚上，肝脏又重新长了出来。这样，普罗米修斯所承受的痛苦，永远没有了尽头。
+
+许多年来，普罗米修斯一直被锁在那个可怕的悬崖上。
+
+有一天，著名的大力士赫拉克勒斯经过高加索山。他看到普罗米修斯被锁在悬崖上，心中愤愤不平，便挽弓搭箭，射死了那只鹫鹰，又用石头砸碎了锁链。普罗米修斯——这位敢于从天上"盗"取火种的英雄，终于获得了自由。`
+                },
+                {
+                    id: '23',
+                    title: '23* 梅兰芳蓄须',
+                    content: `梅兰芳先生是闻名世界的京剧表演艺术家。他在舞台上唱旦角，为了演出的需要，总是把胡须剃得干干净净的。但他的一生中，有几年却是留着胡须的。
+
+1937年，日军占领上海，梅兰芳被迫藏身租界，以躲避日本人的纠缠。1938年底，有人邀请他去香港演戏。演出结束后，梅兰芳在香港住了下来，深居简出，不再登台。
+
+1941年12月香港沦陷。日本驻港司令官亲自出马，多次逼迫梅兰芳演戏。梅兰芳可以忍受生活的困顿，直面战争的危险，但他难以抵抗来自侵略者随时随地的骚扰。拒绝的借口都用尽了，梅兰芳最后只能蓄须明志，表示对日本帝国主义的抗议，表明不给侵略者演戏的决心。后来，梅兰芳不堪其扰，只好又回到了上海。
+
+长期不演戏，没有了经济来源，又要养家，梅兰芳准备卖掉北京的房子。听说梅兰芳要卖房子，很多戏园子老板找上门来说："梅先生，您何必卖房子，只要您把胡子一剃，一登台，还愁没钱花？"有的甚至说，只要签订演出合同，就预支二十两黄金给梅兰芳。但是，无论戏园子老板开出的条件多么优厚，梅兰芳全部拒绝了。他宁可卖房度日，也决不在日本侵略者的统治下登台演出。
+
+一次，日本侵略军要庆祝"大东亚圣战"，要求他必须上台演出。梅兰芳斩钉截铁地说："普通的演出我都不参加，这样的庆祝会当然更不会去了。"但是，拒绝演出总得要想出个办法啊。
+
+梅兰芳找到一位当医生的好朋友，说明了自己的危险处境，请朋友设法让他生一场"大病"，以摆脱日本人。这个朋友被他的爱国精神感动了，决心帮助他渡过难关，于是给他打了伤寒预防针，人打了这种针就会连日发高烧。
+
+日本人不相信梅兰芳病了，专门派了一个军医来检查。日本军医闯进梅兰芳的家，看见他盖着棉被躺在床上，床边桌子上放着很多药。军医用手摸了摸梅兰芳的额头，滚烫滚烫的，看不出破绽，只好认定梅兰芳得了重病，不能登台演出了。日本侵略者的妄想最终没有实现，梅兰芳为此差点儿丢了性命。
+
+当抗日战争取得胜利的消息传来时，梅兰芳当即剃了胡须，高兴地向大家宣布："胜利了，我该登台演出了！"前来看他演出的人太多了，很多人没有座位就站着看。
+
+作为艺术家，梅兰芳先生高超的表演艺术让人喜爱，他的民族气节更令人敬佩！`
+                },
+                {
+                    id: '24',
+                    title: '24* 延安，我把你追寻',
+                    content: `像翩翩归来的燕子，
+在追寻昔日的春光；
+像茁壮成长的小树，
+在追寻雨露和太阳。
+
+追寻你，延河叮咚的流水，
+追寻你，枣园梨花的清香，
+追寻你，南泥湾开荒的锄头，
+追寻你，杨家岭讲话的会场。
+
+一排排高楼大厦像雨后春笋，
+一件件家用电器满目琳琅；
+我们永远告别了破旧的茅屋，
+却忘不了延安窑洞温热的土炕。
+
+宇宙飞船探索太空的奥秘，
+电子计算机奏出美妙的交响；
+我们毫不犹豫丢掉了老牛破车，
+却不能丢宝塔山顶天立地的脊梁。
+
+延安，你的精神灿烂辉煌！
+一旦失去了你啊，
+那就仿佛没有了灵魂，
+怎能向美好的未来展翅飞翔？
+
+啊！延安，我把你追寻，
+追寻信念，追寻金色的理想；
+追寻温暖，追寻明媚的春光；
+追寻光明，追寻火红的太阳！`
+                },
+                {
+                    id: '15',
+                    title: '15* 女娲补天',
+                    content: `自从女娲创造了人类，大地上到处欢声笑语，人们过着快乐幸福的生活。
+
+不料有一年，天地忽然发生了一场大变动。天上露出一个大窟窿，地上也裂开了一道道黑黝黝的深沟，洪水从地下喷涌而出，各种野兽也从山林里跑出来残害人类。人们惊慌失措，四处奔逃，整个世界陷入了一片混乱和恐怖之中。
+
+女娲看到这情景，难过极了，决心把天和地修补起来，让人类重新过上幸福的生活。
+
+女娲先从各地拣来赤、青、黄、白、黑五种颜色的石头，燃起神火熔炼。随着神火渐渐熄灭，五种颜色的石头被炼成了黏稠的石浆。
+
+女娲用这些石浆把天上的大窟窿修补好。从此，天上便有了五色的云霞。女娲担心补好的天再塌下来，于是又杀了一只大海龟，斩下它的四条腿，竖立在大地的四方，把人类头顶上的天空撑起来，这样天就再也没有了坍塌的危险。接着，她奋勇杀死了在中原一带作恶的黑龙，其他野兽见此情景，吓得纷纷逃回山林，再不敢到处流窜残害人类了。最后，女娲把芦苇烧成灰，撒到水中，芦灰越积越厚，把喷涌洪水的地缝也堵住了。
+
+天和地终于恢复了平静，人类获得了新生。人们世世代代怀念着女娲，传颂着她的伟大功绩。`
+                },
+                {
+                    id: '8',
+                    title: '8* 蝴蝶的家',
+                    content: `我常想，下大雨的时候，青鸟、麻雀这些鸟都要躲避起来，蝴蝶怎么办呢？天是那样低沉，云是那样黑，雷、电、雨、风，吼叫着，震撼着，雨点密集地喧嚷着，风将银色的雨幕斜挂起来，世界几乎都被冲洗遍了，就连树林里也黑压压的、水淋淋的，到处都是湿的。这不是难为蝴蝶吗？
+
+我一想起来就为蝴蝶着急，这样的天气它们能躲在哪里呢？它们的身体是那样轻盈，载不动一个水点；它们身上的彩粉是那样斑斓，一点儿水都不能沾；它们是那样柔弱，比一片树叶还无力，怎么禁得起这猛烈的风雨呢？想到这里，我简直没法再想下去了，心里是那样着急。
+
+但是，一位小朋友非常确定地说："它们和我们一样，肯定有家。下雨的时候，它们就会急忙飞回家里去哩！"
+
+不过它们的家在哪里呢？人们的屋宇里从没有见过有蝴蝶来避雨。麦田里呢？也不能避雨。树林里呢？到处是水珠滚坠。园里的花朵是它们的家吗？花朵自己已经被雨点打得抖个不停了，怎能容它们藏身呢？蝴蝶的家到底在哪里呢？我真为蝴蝶着急了。
+
+一个女孩对我说："雨后，蝴蝶就会重新出来，在阳光里飞。它们是那么高兴，那么鲜艳。我想，它们一定是藏在一个秘密的家里。它们的家一定美丽而香甜，不像家雀儿似的，一下雨就飞到人们的屋檐下避雨。一定是这样的。"
+
+她的话说得倒是不错，但我却从来没有见到过下雨时蝴蝶藏身的地方。谁要是能说给我听，我就不着急了。`
+                },
+                {
+                    id: '4',
+                    title: '4* 繁星',
+                    content: `我爱月夜，但我也爱星天。从前在家乡七八月的夜晚，在庭院里纳凉的时候，我最爱看天上密密麻麻的星星。
+
+三年前，在南京我住的地方有一道后门，每晚我打开后门，便看见一个静寂的夜。下面是一片菜园，上面是星群密布的蓝天。星光在我们的肉眼里虽然微小，然而它使我们觉得光明无处不在。
+
+如今在海上，每晚和繁星相对，我把它们认得很熟了。我躺在舱面上，仰望天空。深蓝色的天空里，悬着无数半明半昧的星。船在动，星也在动，它们是这样低，真是摇摇欲坠呢！渐渐地我的眼睛模糊了，我好像看见无数萤火虫在我的周围飞舞。海上的夜是柔和的，是静寂的，是梦幻的。我望着那许多认识的星，我仿佛看见它们在对我眨眼，我仿佛听见它们在小声说话。这时候我忘记了一切。在星的怀抱中我微笑着，我沉睡着。我觉得自己是一个小孩子，现在睡在母亲的怀里了。`
+                },
+                {
+                    id: '25',
+                    title: '25 王戎不取道旁李',
+                    content: `王戎七岁，尝与诸小儿游。看道边李树多子折枝，诸儿竞走取之，唯戎不动。人问之，答曰："树在道边而多子，此必苦李。"取之，信然。`
+                },
+                {
+                    id: '26',
+                    title: '26 西门豹治邺',
+                    content: `战国时期，魏国的国君派西门豹去管理漳河边上的邺县。西门豹到了那个地方，看到田地荒芜，人烟稀少，就找了位老大爷来，问他是怎么回事。
+
+老大爷说："都是河神娶媳妇给闹的。河神是漳河的神，每年要娶一个年轻漂亮的姑娘。要不给他送去，漳河就要发大水，把田地全淹了。"
+
+西门豹问："这话是谁说的？"
+
+老大爷说："巫婆说的。地方上的官绅每年出面给河神办喜事，硬逼着老百姓出钱。每闹一次，他们要收几百万钱，办喜事只花二三十万，多下来的就跟巫婆分了。"
+
+西门豹问："新娘是哪儿来的？"
+
+老大爷说："哪家有年轻的女孩，巫婆就带着人到哪家去选。有钱的人家花点儿钱就过去了，没钱的只好眼睁睁地看着女孩被他们拉走。到了河神娶媳妇那天，他们在漳河边放一条苇席，把女孩打扮好了，让她坐在苇席上，顺着水漂去。苇席先还是浮着的，到了河中心就连女孩一起沉下去了。有女孩的人家差不多都逃到外地去了，所以人口越来越少，这地方也越来越穷。"
+
+西门豹说："这样说来，河神还真灵啊。下一回他娶媳妇，请告诉我一声，我也去送送新娘。"
+
+到了河神娶媳妇的日子，漳河边上站满了老百姓。西门豹带着卫士，真的来了，巫婆和官绅急忙迎接。
+
+西门豹说："把新娘领来让我看看。"巫婆叫徒弟把那个打扮好的姑娘领了来。西门豹一看，女孩满脸泪水。他回过头来对巫婆说："不行，这个姑娘不漂亮，河神不会满意的。麻烦你去跟河神说一声，说我要选个漂亮的，过几天就送去。"说完，他叫卫士架起巫婆，把她投进了漳河。
+
+巫婆在河里扑腾了几下就沉下去了。等了一会儿，西门豹对官绅的头子说："巫婆怎么还不回来，麻烦你去催一催吧。"说完，又叫卫士把官绅的头子投进了漳河。
+
+西门豹面对着漳河站了很久。那些官绅都提心吊胆，大气儿也不敢出。西门豹回过头来，看着他们说："怎么还不回来，请你们去催催吧！"说着又要叫卫士把他们扔下漳河去。
+
+官绅一个个吓得面如土色，跪下来磕头求饶，把头都磕破了，直淌血。西门豹说："好吧，再等一会儿。"过了一会儿，他才说："起来吧。看样子是河神把他们留下了。你们都回去吧。"
+
+老百姓都明白了，巫婆和官绅都是骗钱害人的。从此，谁也不敢再提给河神娶媳妇，漳河也没有发大水。
+
+西门豹发动老百姓开凿了十二条渠道，把漳河的水引到田里。庄稼得到灌溉，年年都获得好收成。`
+                },
+                {
+                    id: '27',
+                    title: '27* 故事二则',
+                    content: `扁鹊治病
+
+有一天，名医扁鹊去拜见蔡桓侯。
+
+扁鹊在蔡桓侯身边站了一会儿，说："据我看来，您皮肤上有点儿小病。要是不治，恐怕会向体内发展。"蔡桓侯说："我的身体很好，什么病也没有。"扁鹊走后，蔡桓侯对左右的人说："这些做医生的，总喜欢给没有病的人治病。医治没有病的人，才容易显示自己的高明！"
+
+过了十天，扁鹊又来拜见蔡桓侯，说道："您的病已经发展到皮肉之间了，要是不治还会加深。"蔡桓侯听了很不高兴，没有理睬他。扁鹊只好退了出去。
+
+十天后，扁鹊再一次来拜见，对蔡桓侯说："您的病已经发展到肠胃里，再不治会更加严重。"蔡桓侯听了非常不高兴。扁鹊连忙退了出去。
+
+又过了十天，扁鹊老远望见蔡桓侯，只看了几眼，就掉头跑了。蔡桓侯觉得奇怪，派人去问他："扁鹊，你为什么一声不响就跑掉了？"扁鹊解释道："病在皮肤上，用热敷就能够治好；发展到皮肉之间，用扎针的方法可以治好；即使发展到肠胃里，服几剂汤药也还能治好；一旦深入骨髓，只能等死，医生再也无能为力了。现在病已经深入骨髓，所以我不再请求给他医治！"
+
+五天之后，蔡桓侯浑身疼痛，派人去请扁鹊给他治病。扁鹊早知道蔡桓侯要来请他，几天前就跑到秦国去了。不久，蔡桓侯病死了。
+
+纪昌学射
+
+飞卫是一名射箭能手。有个叫纪昌的人，想学习射箭，就去向飞卫请教。
+
+开始练习的时候，飞卫对纪昌说："你要想学会射箭，首先应该下功夫练眼力。你要牢牢地盯住一个目标，不能眨眼！"纪昌回家之后，就开始练习起来。妻子织布的时候，他躺在织布机下面，睁大眼睛，死死盯住织布机的踏板。两年以后，纪昌的本领练得相当到家了——就是锋利的锥尖要刺到眼角了，他的眼睛也不眨一下。
+
+纪昌对自己的成绩感到很满意，以为练得差不多了，就再次去拜见飞卫。飞卫对他说："虽然你已经取得了不小的成绩，但你的眼力还不够。你要练到把极小的东西看得很大，把模糊难辨的东西看得很清楚，那时候再来见我。"纪昌记住了飞卫的话，回到家里，又开始练习起来。他用一根牛尾毛拴住一只虱子，把它吊在窗口，然后每天站在虱子旁边，聚精会神地盯着它。那只小虱子，在纪昌的眼里一天天大起来，练到后来，大得竟然像车轮一样。
+
+取得了这样大的进步，纪昌赶紧跑到飞卫那里，报告了这个好消息。飞卫高兴地说："你就要成功了！"于是，飞卫开始教他怎样开弓，怎样放箭。
+
+后来，纪昌成了百发百中的射箭能手。`
+                }
+            ],
+            '五年级上册': [
+                {id: '1', title: '1 白鹭', content: ''},
+                {id: '2', title: '2 落花生', content: ''},
+                {id: '3', title: '3 桂花雨', content: ''},
+                {id: '4', title: '4* 珍珠鸟', content: ''},
+                {id: '5', title: '5 搭石', content: ''},
+                {id: '6', title: '6 将相和', content: ''},
+                {id: '7', title: '7 什么比猎豹的速度更快', content: ''},
+                {id: '8', title: '8* 冀中的地道战', content: ''}
+            ],
+            '六年级上册': [
+                {id: '1', title: '1 草原', content: `钱塘江大潮，自古以来被称为天下奇观。
+
+我们来到了海宁市的盐官镇，据说这里是观潮最好的地方。我们随着观潮的人群，登上了海塘大堤。宽阔的钱塘江横卧在眼前。江面很平静，越往东越宽，在雨后的阳光下，笼罩着一层蒙蒙的薄雾。镇海古塔、中山亭和观潮台屹立在江边。远处，几座小山在云雾中若隐若现。江潮还没有来，海塘大堤上早已人山人海。大家昂首东望，等着，盼着。`},
+                {id: '2', title: '2 丁香结', content: ''},
+                {id: '3', title: '3 古诗词三首', content: ''},
+                {id: '4', title: '4 七律·长征', content: ''},
+                {id: '5', title: '5 狼牙山五壮士', content: ''},
+                {id: '6', title: '6 开国大典', content: ''},
+                {id: '7', title: '7* 灯光', content: ''},
+                {id: '8', title: '8 竹节人', content: ''}
+            ]
+        };
+
+        function loadLessonFromLibrary() {
+            const gradeSelect = document.getElementById('grade');
+            const lessonSelect = document.getElementById('lessonSelect');
+            const grade = gradeSelect.value;
+            const lessonId = lessonSelect.value;
+
+            if (!grade || !lessonId) return;
+
+            const lessons = textbookLibrary[grade];
+            if (!lessons) return;
+
+            const lesson = lessons.find(l => l.id === lessonId);
+            if (!lesson) return;
+
+            // 去掉标题前的数字编号（如 "1 观潮" → "观潮"）
+            const cleanTitle = lesson.title.replace(/^\d+[\s*]*/, '');
+            document.getElementById('lessonName').value = cleanTitle;
+            document.getElementById('lessonContent').value = lesson.content || '';
+        }
+
+        function populateLessonDropdown() {
+            const grade = document.getElementById('grade').value;
+            const lessonSelect = document.getElementById('lessonSelect');
+            lessonSelect.innerHTML = '<option value="">请选择课文</option>';
+            document.getElementById('lessonName').value = '';
+            document.getElementById('lessonContent').value = '';
+
+            if (!grade || !textbookLibrary[grade]) return;
+
+            const lessons = textbookLibrary[grade].slice().sort((a, b) => parseInt(a.id) - parseInt(b.id));
+
+            lessons.forEach(lesson => {
+                const option = document.createElement('option');
+                option.value = lesson.id;
+                option.textContent = lesson.title;
+                lessonSelect.appendChild(option);
+            });
+        }
+
+        // ─── 历史记录功能 ───────────────────────────────────────
+
+        const HISTORY_KEY = 'scriptHistory';
+        const MAX_HISTORY = 30;
+
+        function saveHistory(lessonName, grade, content) {
+            const history = getHistory();
+            const record = {
+                id: Date.now(),
+                lessonName,
+                grade,
+                content,
+                time: new Date().toLocaleString('zh-CN', {
+                    month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit'
+                })
+            };
+            history.unshift(record);
+            if (history.length > MAX_HISTORY) history.splice(MAX_HISTORY);
+            localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+            renderHistory();
+        }
+
+        function getHistory() {
+            try {
+                return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+            } catch { return []; }
+        }
+
+        function renderHistory() {
+            const history = getHistory();
+            const list = document.getElementById('historyList');
+            const countEl = document.getElementById('historyCount');
+            countEl.textContent = history.length;
+
+            if (history.length === 0) {
+                list.innerHTML = '<div class="history-empty">暂无生成记录</div>';
+                return;
+            }
+
+            list.innerHTML = history.map(r => `
+                <div class="history-item" id="hist-${r.id}">
+                    <div class="history-item-title" title="${r.lessonName}">《${r.lessonName}》</div>
+                    <div class="history-item-meta">${r.grade} · ${r.time}</div>
+                    <div class="history-item-actions">
+                        <button class="history-btn history-btn-view" onclick="viewHistory(${r.id})">查看</button>
+                        <button class="history-btn history-btn-delete" onclick="deleteHistory(${r.id}, event)">删除</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function viewHistory(id) {
+            const history = getHistory();
+            const record = history.find(r => r.id === id);
+            if (!record) return;
+
+            // 高亮选中项
+            document.querySelectorAll('.history-item').forEach(el => el.classList.remove('active'));
+            const item = document.getElementById('hist-' + id);
+            if (item) item.classList.add('active');
+
+            // 显示内容
+            document.getElementById('resultContent').textContent = record.content;
+            document.getElementById('resultArea').style.display = 'block';
+            document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function deleteHistory(id, event) {
+            event.stopPropagation();
+            const history = getHistory().filter(r => r.id !== id);
+            localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+            renderHistory();
+
+            // 如果当前显示的正是这条记录，隐藏结果区（通过检查高亮项）
+            const active = document.getElementById('hist-' + id);
+            if (active && active.classList.contains('active')) {
+                document.getElementById('resultArea').style.display = 'none';
+            }
+        }
+
+        function clearAllHistory() {
+            if (!confirm('确定清空全部历史记录？')) return;
+            localStorage.removeItem(HISTORY_KEY);
+            renderHistory();
+        }
+
+        // 页面加载时渲染历史
+        window.addEventListener('DOMContentLoaded', function() {
+            const savedKey = localStorage.getItem('claudeApiKey');
+            if (savedKey) {
+                document.getElementById('apiKey').value = savedKey;
+                document.getElementById('saveKey').checked = true;
+            }
+            renderHistory();
+        });
+
+    </script>
+</body>
+</html>
